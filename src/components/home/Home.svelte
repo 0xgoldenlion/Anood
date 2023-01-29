@@ -26,7 +26,7 @@
   </div>
 
   <footer>
-    <div class="copyright">CAP &copy; {year}</div>
+    <div class="copyright">Annod &copy; {year}</div>
   </footer>
 </div>
 
