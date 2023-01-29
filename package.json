@@ -2,6 +2,7 @@
 	"name": "spacewrap",
 	"version": "0.0.1",
 	"private": true,
+	"main": "index.js",
 	"scripts": {
 		"build": "rollup -c",
 		"dev": "rollup -c -w",

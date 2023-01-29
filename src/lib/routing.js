@@ -1,8 +1,8 @@
 import { get } from 'svelte/store'
 
 import Home from '@components/home/Home.svelte'
-import Trade from '@components/trade/Trade.svelte'
-import Pool from '@components/pool/Pool.svelte'
+// import Trade from '@components/trade/Trade.svelte'
+// import Pool from '@components/pool/Pool.svelte'
 
 import { component, pageName, selectedMarket } from './stores'
 import { setPageTitle } from './ui'
@@ -13,14 +13,14 @@ const PAGES = {
 		component: Home,
 		paths: ['']
 	},
-	'Trade': {
-		component: Trade,
-		paths: ['trade']
-	},
-	'Pool': {
-		component: Pool,
-		paths: ['pool']
-	}
+	// 'Trade': {
+	// 	component: Trade,
+	// 	paths: ['trade']
+	// },
+	// 'Pool': {
+	// 	component: Pool,
+	// 	paths: ['pool']
+	// }
 };
 
 async function setMarket(market) {

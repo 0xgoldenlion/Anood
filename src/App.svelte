@@ -1,8 +1,38 @@
 <script>
   import { onMount } from "svelte";
+
+  import Modals from "@components/layout/Modals.svelte";
+  import Errors from "@components/layout/Errors.svelte";
+  import Toasts from "@components/layout/Toasts.svelte";
+  import Header from "@components/header/Header.svelte";
+
+  import { loadRoute, catchLinks, navigateTo } from "@lib/routing";
+  import { component, address, pageName } from "@lib/stores";
+  import { hidePopoversOnKeydown, hidePopoversOnClick } from "@lib/ui";
+  import { runAndInterval } from "@lib/utils";
+
+  // import { listenToEvents } from '@api/listener'
+  // import { getMarketsWithPrices } from '@api/markets'
+
+  onMount(async () => {
+    loadRoute();
+    catchLinks((path) => navigateTo(path));
+    window.onpopstate = () => loadRoute();
+    runAndInterval(getMarketsWithPrices, 10 * 1000);
+  });
+
+  //   // Listener
+  //   $: listenToEvents($address);
 </script>
 
 <svelte:window on:keydown={hidePopoversOnKeydown} on:click={hidePopoversOnClick} />
+
+{#if $pageName != "Home"}
+  <Errors />
+  <Modals />
+  <Toasts />
+  <Header />
+{/if}
 
 <svelte:component this={$component} />
 
