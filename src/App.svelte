@@ -11,8 +11,8 @@
   import { hidePopoversOnKeydown, hidePopoversOnClick } from "@lib/ui";
   import { runAndInterval } from "@lib/utils";
 
-  // import { listenToEvents } from '@api/listener'
-  // import { getMarketsWithPrices } from '@api/markets'
+  import { listenToEvents } from "@api/listener";
+  import { getMarketsWithPrices } from "@api/markets";
 
   onMount(async () => {
     loadRoute();
@@ -21,8 +21,8 @@
     runAndInterval(getMarketsWithPrices, 10 * 1000);
   });
 
-  //   // Listener
-  //   $: listenToEvents($address);
+  // Listener
+  $: listenToEvents($address);
 </script>
 
 <svelte:window on:keydown={hidePopoversOnKeydown} on:click={hidePopoversOnClick} />
