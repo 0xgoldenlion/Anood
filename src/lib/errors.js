@@ -1,34 +1,41 @@
 // Error strings
 
-const DEFAULT_ERROR = "Unidentified error. Check browser console or show details for more.";
+const DEFAULT_ERROR = "Unidentified error. Check your browser console for more details.";
 
 const ERROR_STRINGS = {
-	'user denied': null,
-	'user rejected': null,
+	'User denied': null,
+	'User rejected': null,
 	'insufficient balance': "You have insufficient funds to complete this transaction.",
 	'exceeds balance': "You have insufficient funds to complete this transaction.",
 	'allowance': "You have to approve spending this ERC20 before depositing.",
-	'!amount': 'Amount is required.',
-	'!market': 'Market does not exist.',
-	'!equity': 'Not enough equity available.',
-	'!margin': 'Not enough free margin available.',
-	'!min-size': 'The order size is below the minimum size ($20).',
-	'!chainlink': 'Chainlink is unavailable.',
-	'!orderType': 'The order type or price is incorrect relative to the market price.',
-	'!user': 'User is unauthorized.',
-	'!market-order': 'Cannot update or cancel market order.',
 	'!position': 'Position not found.',
-	'!price': 'Price is unavailable.',
-	'pnl < 0': 'Only positive UP/L positions can be closed without profit.',
-	'!empty': 'Pool is empty.',
-	'!pool-balance': 'Not enough balance is available in the pool.',
+	'!size': "Trade size is too low.",
+	'!currency': "Currency is not supported.",
+	'!order': "Your order is still settling. Please try again later.",
+	'!exists': "This order does not exist.",
+	'!margin': "Margin is too low.",
+	'!min-margin': "Margin is too low (min: 0.001 ETH).",
+	'!margin<fee': "Margin sent is below the required fee.",
+	'!leverage': "Leverage is too low.",
+	'!max-leverage': "Leverage is too high.",
+	'!price': "Price is unavailable.",
+	'!fee': "Submitted fee is incorrect.",
+	'!user': "You're not the owner of this position.",
+	'!opening': "Position is still settling. Please try again later.",
+	'!closing': "Position is still closing. Please try again later.",
+	'!low-leverage': "Leverage would be too low. Try adding less margin.",
+	'!cooldown': "You have to wait a few hours after depositing before withdrawing.",
+	'!empty': "The pool is empty.",
+	'!utilization': "Pool utilization ratio is too high. Please try again later or with a smaller position size.",
+	'!available-balance': "Not enough non-utilized balance is available in the pool. Please try again later or with a smaller amount.",
+	'!max-cap': "Maximum pool cap has been reached.",
+	'!clp-amount': "Minted amount is too low.",
 	'gas': "Insufficient funds or gas. Deposit more funds into your wallet or try adjusting the gas limit.",
 	'nonce': 'Invalid transaction nonce. Please try again or try resetting your Metamask account.',
-	'insufficienttxfunds': "You don't have enough funds to complete this transaction."
+	'InsufficientTxFunds': "You don't have enough funds to complete this transaction."
 };
 
-export function parseError(e) {
-	console.log('e', typeof(e), e);
+export function parseErrorToString(e) {
 	if (!e) return DEFAULT_ERROR;
 	if (typeof(e) == 'string') return e;
 	let error_string = '';

@@ -3,9 +3,10 @@ export const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 export const HISTORY_COUNT = 10;
 
 export const CURRENCY_LOGOS = {
-	weth: '/logos/ETH.svg',
+	tfil: '/logos/FIL.svg',
 	usdc: '/logos/USDC.svg',
-	cap: ''
+	weth: '/logos/FIL.svg',
+	cap: '/logos/CAP.svg'
 }
 
 export const ABIS = {
@@ -17,9 +18,9 @@ export const ABIS = {
 
 		"function getPool(address currency) view returns(address)",
 		"function getPoolShare(address currency) view returns(uint256)",
-		"function getCapShare(address currency) view returns(uint256)",
+		"function getANDShare(address currency) view returns(uint256)",
 		"function getPoolRewards(address currency) view returns(address)",
-		"function getCapRewards(address currency) view returns(address)"
+		"function getANDRewards(address currency) view returns(address)"
 	],
 	trading: [
 		"function getProduct(bytes32 productId) view returns(tuple(uint64 maxLeverage, uint64 liquidationThreshold, uint64 fee, uint64 interest))",
@@ -70,7 +71,37 @@ export const ABIS = {
 // Contract addresses are pulled from router contract
 
 export const CHAINDATA = {
-	
+	31337: {
+		label: 'localhost',
+		router: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+		explorer: 'http://localhost:8545',
+		currencies: {
+			weth: ADDRESS_ZERO,
+			usdc: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'
+		},
+		poolInception: {
+			weth: 1637154307000,
+			usdc: 1637154307000,
+			cap: 1637154307000
+		},
+		cap: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9'
+	},
+	42161: {
+		label: 'Arbitrum',
+		router: '0x5ABFF8F8D5b13253dCAB1e427Fdb3305cA620119',
+		explorer: 'https://arbiscan.io',
+		rpc: 'https://arb1.arbitrum.io/rpc', // for walletconnect
+		currencies: {
+			weth: ADDRESS_ZERO,
+			usdc: '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8'
+		},
+		poolInception: {
+			weth: 1637154307000,
+			usdc: 1637154307000,
+			cap: 1637154307000
+		},
+		cap: '0x031d35296154279DC1984dCD93E392b1f946737b'
+	},
 	3141: {
 		label: 'hyperspace',
 		router: '0x62b3102C68cF4C3F127221b03911cbF6B36110E4',
@@ -80,19 +111,17 @@ export const CHAINDATA = {
 			weth: ADDRESS_ZERO,
 			usdc: '0xa0f29623DDD59b9F82317b9bE0cD9bA7de58e449'
 		},
-		poolInception: {
-			weth: 1637154307000,
-			usdc: 1637154307000,
-			and: 1637154307000
-		},
-		and: '0x7f54F77803A52f75eCa36c0b8718ED86bb2cb262',
 		chainName: 'Filecoin hyperspace',
 		chainNameShort: 'hyperspace', //for mobile screens
 		chainId: '0xc45', //chainId number in hexadecimal prefixed by 0x
 		nativeAssetName: 'tFIL',
 		nativeAssetSymbol: 'tFIL',
 		nativeAssetDecimals: 18,
+		poolInception: {
+			weth: 1637154307000,
+			usdc: 1637154307000,
+			cap: 1637154307000
+		},
+		cap: '0x7f54F77803A52f75eCa36c0b8718ED86bb2cb262'
 	},
-
-
 }

@@ -1,118 +1,124 @@
-import { ethers } from 'ethers'
 import { writable, derived } from 'svelte/store'
-import { getUserSetting } from './utils'
-import { DEFAULT_LOCALE, DEFAULT_MARKET, DEFAULT_LEVERAGE, BPS_DIVIDER, DEFAULT_MARKETS_SORT_KEY, DEFAULT_ORDERS_SORT_KEY, DEFAULT_POSITIONS_SORT_KEY, DEFAULT_CHAIN_ID } from './config'
-
-// Language
-export const locale = writable(getUserSetting('locale') || DEFAULT_LOCALE);
-
-// Currency
-export const currencyName = writable();
-
-// Settings
-export const showOrdersOnChart = writable(getUserSetting('showOrdersOnChart') == undefined ? false : getUserSetting('showOrdersOnChart'));
-export const showPositionsOnChart = writable(getUserSetting('showPositionsOnChart') == undefined ? false : getUserSetting('showPositionsOnChart'));
-
-// Router
-export const component = writable();
-export const pageName = writable();
-
-// Modal
-export const activeModal = writable();
-
-// Toasts
-export const toasts = writable([]);
-
-// Error
-export const activeError = writable();
-
-// Contracts
-export const provider = writable();
-export const chainId = writable(getUserSetting('selectedChainId') == undefined ? DEFAULT_CHAIN_ID : getUserSetting('selectedChainId'));
-export const signer = writable();
-export const address = writable();
-export const unsupportedNetwork = writable();
-
-// Account
-export const balance = writable(0);
-export const allowance = writable(0);
-export const lockedMargin = writable(0);
-export const upl = writable(0);
-
-export const equity = derived([balance, upl], ([$balance, $upl]) => {
-	return $balance * 1 + $upl * 1;
-}, 0);
-export const freeMargin = derived([equity, lockedMargin], ([$equity, $lockedMargin]) => {
-	return $equity - $lockedMargin * 1;
-}, 0);
-export const marginLevel = derived([equity, lockedMargin], ([$equity, $lockedMargin]) => {
-	return $equity * 100 / $lockedMargin * 1;
-}, 0);
-
-// Chart
-export const chartHeight = writable(getUserSetting('chartHeight') || 320);
-export const chartResolution = writable(getUserSetting('chartResolution') || 900)
-export const chartLoading = writable(false);
-export const hoveredOHLC = writable();
-export const tradesHeight = writable(getUserSetting('tradesHeight') || 250);
-
-// Pool
-export const poolBalance = writable();
-export const bufferBalance = writable();
-export const userPoolBalance = writable();
-export const poolWithdrawalFee = writable();
-
-// Markets
-export const selectedMarket = writable(getUserSetting('selectedMarket') || DEFAULT_MARKET);
-export const markets = writable({}); // with prices
-export const fundingRate = writable();
-export const OILong = writable();
-export const OIShort = writable();
-export const selectedMarketInfo = derived([markets, selectedMarket], ([$markets, $selectedMarket]) => {
-	return $markets[$selectedMarket] || {};
-}, {});
-
-// New Order
-export const isLong = writable(true);
-export const orderType = writable(0);
-export const size = writable();
-export const price = writable();
-export const tpPrice = writable();
-export const slPrice = writable();
-export const hasTPSL = writable(false);
-export const isReduceOnly = writable(false);
-export const submittingOrder = writable(false);
-
-export const leverage = derived([selectedMarketInfo], ([$selectedMarketInfo]) => {
-	return $selectedMarketInfo?.maxLeverage;
-}, DEFAULT_LEVERAGE);
-
-export const maxSize = derived([freeMargin, leverage, selectedMarketInfo], ([$freeMargin, $leverage, $selectedMarketInfo]) => {
-	if (!$leverage || !$selectedMarketInfo || !$freeMargin) return 0;
-	let ms = $freeMargin * $leverage * (1 - $selectedMarketInfo.fee / BPS_DIVIDER);
-	if (ms < 0) ms = 0;
-	return ms;
-}, 0);
-
-export const margin = derived([size, leverage], ([$size, $leverage]) => {
-	if (!$size || !$leverage) return 0;
-	const margin = Math.ceil(10**8 * ($size || 0)) / (10**8 * $leverage);
-	return margin;
-}, 0);
-
-// Orders
-export const orders = writable([]);
-export const ordersColumnsToShow = writable(getUserSetting('ordersColumnsToShow') || ['timestamp', 'isLong', 'market', 'price', 'size', 'margin', 'orderType', 'isReduceOnly', 'tools']);
-
-// Positions
-export const positions = writable([]);
-export const positionsColumnsToShow = writable(getUserSetting('positionsColumnsToShow') || ['timestamp', 'isLong', 'market', 'price', 'size', 'margin', 'upl', 'funding', 'liqprice', 'tools']);
+import { PRODUCTS } from './products'
 
 // History
 export const history = writable([]);
-export const historyColumnsToShow = writable(getUserSetting('historyColumnsToShow') || ['timestamp', 'isLong', 'market', 'price', 'size', 'status', 'reason', 'pnl']);
-export const lastHistoryItemsCount = writable(0); // how many items were fetched on the last history page requested (used for infinite scroll)
-export const historyOrderStatusToShow = writable(getUserSetting('historyOrderStatusToShow') || ['cancelled', 'executed', 'liquidated']);
 
-// Table
-export const selectedPanel = writable();
+// Prices
+export const activeProducts = writable({'ETH-USD': true});
+export const prices = writable({});
+export const prices24h = writable({});
+
+// New order
+export const productId = writable(localStorage.getItem('productId') || 'ETH-USD');
+export const product = writable({});
+
+export const currencyLabel = writable(localStorage.getItem('currencyLabel') || 'weth');
+export const currency = writable();
+
+export const size = writable();
+export const leverage = writable();
+
+export const isSubmittingLong = writable(false);
+export const isSubmittingShort = writable(false);
+
+export const margin = derived([size, leverage], ([$size, $leverage]) => {
+	if (!$size || !$leverage) return 0;
+	return ($size || 0) / $leverage;
+}, 0);
+
+export const marginPlusFee = derived([size, leverage, product], ([$size, $leverage, $product]) => {
+	if (!$size || !$leverage || !$product) return 0;
+	let fee = $product.fee || 0;
+	return $size * fee * 1 / 100 + ($size || 0) / $leverage;
+}, 0);
+
+export const slippage = derived([size, productId, currencyLabel], ([$size, $productId, $currencyLabel]) => {
+	
+	// console.log('p', $size, $productId, $prices, $currencyLabel);
+
+	if (!$size || !$productId || !$prices[$productId] || !$currencyLabel) return 0;
+	
+	const productParams = PRODUCTS[$productId];
+	const {
+		baseSpread,
+		maxSlippage,
+		slippageExponent,
+		maxLiquidity
+	} = productParams;
+
+	// console.log('l', $size, productParams, $currencyLabel);
+
+	return -1 * (baseSpread * 100 + maxSlippage * (1 - Math.exp(-1 * Math.pow($size / maxLiquidity[$currencyLabel], slippageExponent))));
+
+}, 0);
+
+// Pools
+export const pools = writable({});
+export const poolStats = writable({});
+export const oldPools = writable({});
+export const capPool = writable({});
+
+// Orders
+export const orders = writable([]);
+
+// Positions
+export const positions = writable([]);
+
+export const enhancedPositions = derived([orders, positions], ([$orders, $positions]) => {
+	// console.log('orders', $orders);
+	// console.log('positions', $positions);
+	let enhanced_positions = [];
+	let new_orders = [];
+	let used_orders = {};
+	for (let p of $positions) {
+		for (let o of $orders) {
+			if (o.key == p.key) {
+				if (o.isClose) {
+					p.isClosing = true;
+				} else {
+					p.isSettling = true;
+				}
+				used_orders[o.key] = true;
+			}
+		}
+		enhanced_positions.push(p);
+	}
+	for (let o of $orders) {
+		if (!used_orders[o.key]) {
+			o.isSettling = true;
+			new_orders.push(o);
+		}
+	}
+	enhanced_positions.sort((a,b) => {
+		if (a.timestamp > b.timestamp) return -1;
+		if (a.timestamp < b.timestamp) return 1;
+		return 0;
+	});
+	new_orders.reverse();
+	return new_orders.concat(enhanced_positions);
+}, []);
+
+// Router
+export const component = writable();
+export const currentPage = writable();
+
+// Toast
+export const toast = writable(null);
+
+// Modal
+export const activeModal = writable({});
+
+// Chart
+export const chartResolution = writable(localStorage.getItem('chartResolution') || 900);
+export const chartLoading = writable();
+
+// Wallet
+export const provider = writable(null);
+export const chainId = writable(null);
+export const signer = writable(null);
+export const address = writable(null);
+
+export const allowances = writable({});
+
+export const wrongNetwork = writable(false);
