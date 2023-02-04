@@ -1,44 +1,72 @@
 <script>
-	import { toasts } from '@lib/stores'
-	import { hideToast } from '@lib/ui'
-	import { CHECKMARK_CIRCLE_INVERTED_ICON, XMARK_ICON } from '@lib/icons'
+	import { toast } from '../../lib/stores'
+	import { hideToast } from '../../lib/utils'
+	import { CANCEL_ICON } from '../../lib/icons'
 </script>
 
 <style>
 
 	.toast-container {
 		position: fixed;
-		bottom: 10px;
-		left: var(--base-padding);
-		z-index: 2000;
+		top: var(--base-padding);
+		left: 0;
+		right: 0;
+		z-index: 101;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
 	}
 
 	.toast {
 		border-radius: var(--base-radius);
 		display: flex;
-		align-items: center;
-		padding: var(--semi-padding);
-		max-width: 260px;
-		word-break: break-word;
-		font-weight: 500;
-		background-color: var(--primary);
-		color: var(--primary-darkest);
-		margin-bottom: var(--semi-padding);
-		cursor: pointer;
+		justify-content: space-between;
+		padding: 10px;
+		max-width: 620px;
+		pointer-events: auto;
 	}
 
-	:global(.toast svg) {
-		width: 16px;
-		fill: currentColor;
-		margin-right: 6px;
+	@media (max-width: 660px) {
+		.toast {
+			max-width: 420px;
+		}
+	}
+
+	.toast.error {
+		background-color: var(--red-dark);
+		color: var(--red);
+		fill: var(--red);
+	}
+	.toast.success {
+		background-color: var(--green-dark);
+		fill: var(--green);
+		color: var(--green);
+	}
+
+	.body {
+		padding-right: var(--base-padding);
+		word-break: break-word;
+		font-weight: 650;
+		line-height: 1.4;
+	}
+
+	:global(.toast .close svg) {
+		height: 14px;
+		width:  14px;
+		margin-bottom: -2px;
+		fill: inherit;
 	}
 
 </style>
 
+{#if $toast}
 <div class='toast-container'>
-{#each $toasts as toast}
-	<div class={`toast success`} data-intercept="true" on:click={() => {hideToast(toast.id)}}>
-		{@html CHECKMARK_CIRCLE_INVERTED_ICON} {toast.message}
+	<div class={`toast ${$toast.type || 'error'}`} data-intercept="true">
+		<div class='body'>
+			{$toast.message}
+		</div>
+		<a class='close' on:click={() => {hideToast()}}>{@html CANCEL_ICON}</a>
 	</div>
-{/each}
 </div>
+{/if}

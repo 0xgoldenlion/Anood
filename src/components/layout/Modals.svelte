@@ -1,60 +1,58 @@
 <script>
-	import { activeModal } from '@lib/stores'
+	import { activeModal } from '../../lib/stores'
 
+	import Network from '../modals/Network.svelte'
 	import Connect from '../modals/Connect.svelte'
+	import Products from '../modals/Products.svelte'
+	import Leverage from '../modals/Leverage.svelte'
+	import Confirmation from '../modals/Confirmation.svelte'
+	import Currencies from '../modals/Currencies.svelte'
 	import ClosePosition from '../modals/ClosePosition.svelte'
-	import Deposit from '../modals/Deposit.svelte'
-	import Withdraw from '../modals/Withdraw.svelte'
-	import MarketInfo from '../modals/MarketInfo.svelte'
-	import EditOrder from '../modals/EditOrder.svelte'
-	import HistoryDetails from '../modals/HistoryDetails.svelte'
-	import ChainSelect from '../modals/ChainSelect.svelte'
-	import TriggerPrice from '../modals/TriggerPrice.svelte'
-	import TPSL from '../modals/TPSL.svelte'
-	import Markets from '../modals/Markets.svelte'
-
+	import PositionDetails from '../modals/PositionDetails.svelte'
+	import TradeDetails from '../modals/TradeDetails.svelte'
+	
+	import PoolDeposit from '../modals/PoolDeposit.svelte'
+	import PoolWithdraw from '../modals/PoolWithdraw.svelte'
+	
 </script>
+
+{#if $activeModal && $activeModal.name == 'Network'}
+<Network />
+{/if}
 
 {#if $activeModal && $activeModal.name == 'Connect'}
 <Connect />
 {/if}
 
+{#if $activeModal && $activeModal.name == 'Products'}
+<Products />
+{/if}
+
+<TradeDetails isActive={$activeModal && $activeModal.name == 'TradeDetails'}  data={$activeModal.data} />
+
+{#if $activeModal && $activeModal.name == 'Leverage'}
+<Leverage />
+{/if}
+
+{#if $activeModal && $activeModal.name == 'Currencies'}
+<Currencies />
+{/if}
+
+{#if $activeModal && $activeModal.name == 'Confirmation'}
+<Confirmation data={$activeModal.data} />
+{/if}
+
 {#if $activeModal && $activeModal.name == 'ClosePosition'}
 <ClosePosition data={$activeModal.data} />
 {/if}
-
-{#if $activeModal && $activeModal.name == 'Deposit'}
-<Deposit />
+{#if $activeModal && $activeModal.name == 'PositionDetails'}
+	<PositionDetails data={$activeModal.data} />
 {/if}
 
-{#if $activeModal && $activeModal.name == 'Withdraw'}
-<Withdraw />
+{#if $activeModal && $activeModal.name == 'PoolDeposit'}
+	<PoolDeposit data={$activeModal.data} />
 {/if}
 
-{#if $activeModal && $activeModal.name == 'MarketInfo'}
-<MarketInfo data={$activeModal.data} />
-{/if}
-
-{#if $activeModal && $activeModal.name == 'EditOrder'}
-<EditOrder data={$activeModal.data} />
-{/if}
-
-{#if $activeModal && $activeModal.name == 'HistoryDetails'}
-<HistoryDetails data={$activeModal.data} />
-{/if}
-
-{#if $activeModal && $activeModal.name == 'ChainSelect'}
-<ChainSelect />
-{/if}
-
-{#if $activeModal && $activeModal.name == 'TriggerPrice'}
-<TriggerPrice />
-{/if}
-
-{#if $activeModal && $activeModal.name == 'TPSL'}
-<TPSL />
-{/if}
-
-{#if $activeModal && $activeModal.name == 'Markets'}
-<Markets />
+{#if $activeModal && $activeModal.name == 'PoolWithdraw'}
+	<PoolWithdraw data={$activeModal.data} />
 {/if}
