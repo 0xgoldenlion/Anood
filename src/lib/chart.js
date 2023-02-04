@@ -1,301 +1,265 @@
 import { get } from 'svelte/store'
-import { createChart, ColorType, LineStyle } from 'lightweight-charts'
 
-import { CURRENCY_DECIMALS } from './config'
-import { formatUnits, formatOrder, formatPosition, formatForDisplay } from './formatters'
-import { selectedMarket, orders, positions, chartResolution, chartLoading, showOrdersOnChart, showPositionsOnChart, hoveredOHLC } from './stores'
-import { saveUserSetting, getPrecision } from './utils'
-
-import { getMarketCandles } from '@api/prices'
+import { product, positions, chartResolution, chartLoading } from './stores'
 
 let candles = []; // current candle set
 
-// In s
+// In ms
+let start;
 let end;
-let earliestCandleDate;
 
 let chart;
 let candlestickSeries;
 
+let isLoadingCandles = false;
+
 // how much history to load for each resolution (in ms)
 const lookbacks = {
-	60: 8 * 60 * 60,
-	300: 24 * 60 * 60,
-	900: 48 * 60 * 60,
-	3600: 12 * 24 * 60 * 60,
-	14400: 4 * 12 * 24 * 60 * 60,
-	86400: 24 * 12 * 24 * 60 * 60,
+	60: 300 * 60 * 1000,
+	300: 24 * 60 * 60 * 1000,
+	900: 48 * 60 * 60 * 1000,
+	3600: 12 * 24 * 60 * 60 * 1000,
+	21600: 6 * 12 * 24 * 60 * 60 * 1000,
+	86400: 24 * 12 * 24 * 60 * 60 * 1000,
 };
 
-function correctedTime(time) {
-	const timezoneOffsetMinutes = new Date().getTimezoneOffset();
-	return time - (timezoneOffsetMinutes * 60);
+let sidebarWidth = 300;
+
+export function initChart() {
+
+	let script = document.createElement("script");
+	script.setAttribute("src", "https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js");
+	document.body.appendChild(script);
+
+	script.addEventListener("load", scriptLoaded, false);
+
+	async function scriptLoaded() {
+
+		let chartElem = document.getElementById('chart');
+		let tradingRowElem = document.getElementById('trade');
+
+		// mobile
+		if (tradingRowElem.offsetWidth <= 600) sidebarWidth = 0;
+		
+		let chartDivWidth = tradingRowElem.offsetWidth - sidebarWidth;
+		let chartDivHeight = chartElem.offsetHeight;
+
+		chart = LightweightCharts.createChart(chartElem, { width: chartDivWidth, height: chartDivHeight });
+
+		window.onresize = () => {
+			chartDivWidth = tradingRowElem.offsetWidth - sidebarWidth;
+			chartDivHeight = chartElem.offsetHeight;
+			// console.log('px', window.devicePixelRatio, window.screen.availWidth, document.documentElement.clientWidth);
+			// console.log('chartDivWidth', chartDivWidth, chartDivHeight);
+			chart.resize(chartDivWidth, chartDivHeight);
+		};
+
+		chart.applyOptions({
+			layout: {
+			    background: {
+			        type: LightweightCharts.ColorType.Solid,
+			        color: '#1A1A1A',
+			    },
+			    textColor: '#707070'
+			},
+			grid: {
+		        vertLines: {
+		            color: '#292929',
+		            style: 1,
+		            visible: true,
+		        },
+		        horzLines: {
+		            color: '#292929',
+		            style: 1,
+		            visible: true,
+		        },
+		    },
+			timeScale: {
+				timeVisible: true
+			},
+			crosshair: {
+				mode: 0,
+				vertLine: {
+					width: 0.5,
+					labelBackgroundColor: '#3D3D3D'
+				},
+				horzLine: {
+					width: 0.5,
+					labelBackgroundColor: '#3D3D3D'
+				}
+			}
+		});
+
+		candlestickSeries = chart.addCandlestickSeries({
+			upColor: '#00C805',
+		    downColor: '#FF5000',
+		    wickUpColor: '#00C805',
+		    wickDownColor: '#FF5000',
+		});
+
+		async function onVisibleLogicalRangeChanged(newVisibleLogicalRange) {
+			//console.log('lvc', newVisibleLogicalRange);
+		    // returns bars info in current visible range
+		    const barsInfo = candlestickSeries.barsInLogicalRange(newVisibleLogicalRange);
+		    //console.log(barsInfo);
+		    if (barsInfo !== null && barsInfo.barsBefore < 5) {
+	            // try to load additional historical data and prepend it to the series data
+	            // use setData with additional data prepended
+	            if (isLoadingCandles) return;
+	            const resolution = get(chartResolution);
+	            // console.log('load left resolution', resolution);
+	            // console.log('load additional data to the left');
+	            isLoadingCandles = true;
+	            await loadCandles(resolution, start - lookbacks[resolution], end - lookbacks[resolution], true);
+	            isLoadingCandles = false;
+	        }
+		}
+
+		function onVisibleTimeRangeChanged(newVisibleTimeRange) {
+			//console.log('vc', newVisibleTimeRange);
+		}
+
+		chart.timeScale().subscribeVisibleTimeRangeChange(onVisibleTimeRangeChanged);
+
+		chart.timeScale().subscribeVisibleLogicalRangeChange(onVisibleLogicalRangeChanged);
+
+		loadPositionLines();
+
+		applyWatermark();
+
+	}
+
 }
 
-function applyWatermark() {
+// timezone corrected time in seconds
+function correctedTime(time) {
+	const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+	//console.log('timezoneOffsetMinutes', timezoneOffsetMinutes);
+	return time-(timezoneOffsetMinutes*60)
+}
+
+export function applyWatermark() {
+	const _product = get(product).symbol;
+	if (!_product) return;
 	chart && chart.applyOptions({
 	    watermark: {
-	        color: 'rgb(44,44,46)',
+	        color: '#292929',
 	        visible: true,
-	        text: get(selectedMarket),
-	        fontSize: 72,
+	        text: _product,
+	        fontSize: 48,
 	        horzAlign: 'center',
 	        vertAlign: 'center',
 	    },
 	});
 }
 
-export function initChart(cb) {
-
-	const chartElem = document.getElementById('chart');
-
-	chart = createChart(chartElem);
-
-	new ResizeObserver((entries) => {
-		if (entries.length === 0 || entries[0].target !== chartElem) return;
-		const newRect = entries[0].contentRect;
-		chart.applyOptions({ height: newRect.height });
-	}).observe(chartElem);
-
-	window.onresize = () => {
-		if (window.innerWidth > 650) {
-			chart.applyOptions({ width: window.innerWidth - 320 - 310 - 5 });
-		} else {
-			chart.applyOptions({ width: window.innerWidth });
-		}
-	};
-
-	window.dispatchEvent(new Event('resize'));
-
-	chart.applyOptions({
-		layout: {
-		    background: {
-		        type: ColorType.Solid,
-		        color: '#1c1d1c',
-		    },
-		    textColor: '#b3b3b3',
-		    fontSize: 13,
-		    fontFamily: 'Inter var'
-		},
-		grid: {
-	        vertLines: {
-	            color: '#2d2e2d',
-	            style: 4,
-	            visible: true,
-	        },
-	        horzLines: {
-	            color: '#2d2e2d',
-	            style: 4,
-	            visible: true,
-	        },
-	    },
-	    rightPriceScale: {
-	    	borderVisible: true, 
-	    	entireTextOnly: true,
-	    	visible: true,
-	    	borderColor: '#2d2e2d',
-	    	autoScale: true
-	    },
-	    leftPriceScale: {
-	    	visible: false,
-	    },
-		timeScale: {
-			timeVisible: true,
-			borderVisible: true,
-	    	borderColor: '#2d2e2d'
-		},
-		crosshair: {
-			mode: 0,
-			vertLine: {
-				color: '#888',
-				width: 1,
-				labelBackgroundColor: '#585958'
-			},
-			horzLine: {
-				color: '#888',
-				width: 1,
-				labelBackgroundColor: '#585958'
-			}
-		}
-	});
-
-	candlestickSeries = chart.addCandlestickSeries({
-		upColor: 'rgb(64,214,67)',
-	    downColor: '#FF5324',
-	    wickUpColor: 'rgb(64,214,67)',
-	    wickDownColor: '#FF5324',
-	});
-
-	chart.timeScale().subscribeVisibleTimeRangeChange(onVisibleTimeRangeChanged);
-	chart.timeScale().subscribeVisibleLogicalRangeChange(onVisibleLogicalRangeChanged);
-
-	orders.subscribe((_orders) => {
-		loadOrderLines(_orders);
-	});
-	showOrdersOnChart.subscribe(() => {
-		loadOrderLines();
-	});
-
-	positions.subscribe((_positions) => {
-		loadPositionLines(_positions);
-	});
-	showPositionsOnChart.subscribe(() => {
-		loadPositionLines();
-	});
-
-	chart.subscribeCrosshairMove(param => {
-		if (!param?.seriesPrices || param?.seriesPrices.size == 0) {
-			hoveredOHLC.set();
-		} else {
-			param?.seriesPrices.forEach((value) => {
-		    	hoveredOHLC.set(value);
-		    });
-		}
-	});
-
-	applyWatermark();
-
-	cb();
-
-}
-
-let isLoadingCandles = false;
-async function onVisibleLogicalRangeChanged(newVisibleLogicalRange) {
-    // const barsInfo = candlestickSeries.barsInLogicalRange(newVisibleLogicalRange);
-    // if (barsInfo !== null && barsInfo.barsBefore < 5) {
-    //     const resolution = get(chartResolution);
-    //     if (isLoadingCandles) return;
-    //     isLoadingCandles = true;
-    //     await loadCandles(end - lookbacks[resolution]);
-    //     isLoadingCandles = false;
-    // }
-}
-
-async function onVisibleTimeRangeChanged(newVisibleTimeRange) {
-	const resolution = get(chartResolution);
-	// console.log('newVisibleTimeRange', newVisibleTimeRange, earliestCandleDate);
-	if (isLoadingCandles) return;
-	isLoadingCandles = true;
-	if (newVisibleTimeRange.from <= earliestCandleDate) {
-		await loadCandles(newVisibleTimeRange.from);
-	}
-	isLoadingCandles = false;
-}
-
-export async function setResolution(resolution) {
-	chartResolution.set(resolution);
-	saveUserSetting('chartResolution', resolution);
-	await loadCandles();
-}
-
-let lastMarket;
-let lastResolution;
-let candleData = {};
-
-export async function loadCandles(_end) {
-
-	applyWatermark();
+export async function setResolution(_resolution) {
+	chartResolution.set(_resolution);
+	localStorage.setItem('chartResolution', _resolution);
 	chartLoading.set(true);
+	await loadCandles(_resolution);
+	chartLoading.set(false);
+}
 
-	const resolution = get(chartResolution);
-	const market = get(selectedMarket);
+export async function loadCandles(_resolution, _start, _end, prepend, productOverride) {
 
-	if (lastMarket != market || resolution != lastResolution) {
-		lastMarket = market;
-		lastResolution = resolution;
-		candleData = {};
-		candles = [];
-		earliestCandleDate = null;
-	}
+	_resolution = get(chartResolution);
 
-	if (!candlestickSeries) return;
+	// console.log('called loadCandles', _resolution, _start, _end, prepend);
 
-	if (!_end) _end = Date.now()/1000;
+	let _product = productOverride || get(product).symbol;
 
-	end = parseInt(_end);
+	// console.log('candlestickSeries', Boolean(candlestickSeries));
+	// console.log('_product', _product);
 
-	const apiCandles = await getMarketCandles({market, resolution, end});
-
-	// After API returns, market and/or resolution may have changed in the meantime
-	if (market != get(selectedMarket) || resolution != get(chartResolution)) {
+	if (!candlestickSeries || !_product) {
+		// try again
+		// console.log('attempting chart again...');
+		setTimeout(() => {
+			loadCandles(_resolution, _start, _end, false, !_product ? 'ETH-USD' : false);
+		}, 2000);
 		return;
 	}
 
-	for (const item of apiCandles) {
-		const time = correctedTime(item.t);
-		candleData[time] = {
-			time,
-			low: item.l,
-			high: item.h,
-			open: item.o,
-			close: item.c
-		};
+	_resolution = get(chartResolution);
+
+	//console.log('_product', _product);
+	//console.log('resolution', _resolution, lookbacks[_resolution]);
+
+	if (!_start || !_end) { // test
+		_start = Date.now() - lookbacks[_resolution];
+		_end = Date.now();
 	}
 
-	candles = Object.values(candleData).sort((a,b) => {
-		if (a.time > b.time) return 1;
-		if (a.time < b.time) return -1;
-		return 0;
-	});
+	start = _start;
+	end = _end;
 
-	// Smooth candles
-	candles = candles.map((candle, index) => {
-		let previousCandle = candles[index-1];
-		if (previousCandle) {
-			candle.open = previousCandle.close;
+	// console.log('start, end', start, end, new Date(start).toString(), new Date(end).toString());
+
+	const url_start = encodeURIComponent(new Date(start).toUTCString());
+	const url_end = encodeURIComponent(new Date(end).toUTCString());
+
+	const response = await fetch(`https://api.exchange.coinbase.com/products/${_product}/candles?granularity=${_resolution}&start=${url_start}&end=${url_end}`);
+	const json = await response.json();
+
+	if (!json || !Array.isArray(json)) {
+		return console.log('json invalid', json);
+	}
+
+	if (prepend) {
+		// prepend candles to existing set
+		let prepend_set = [];
+		for (const item of json) {
+			prepend_set.push({
+				time: correctedTime(item[0]),
+				low: item[1],
+				high: item[2],
+				open: item[3],
+				close: item[4]
+			});
 		}
-		return candle;
-	});
+		prepend_set.reverse();
+		candles = prepend_set.concat(candles);
+	} else {
+		candles = [];
+		for (const item of json) {
+			candles.push({
+				time: correctedTime(item[0]),
+				low: item[1],
+				high: item[2],
+				open: item[3],
+				close: item[4]
+			});
+		}
+		candles.reverse();
+	}
+
+	//console.log('data', data);
 
 	// set data
-	candlestickSeries.setData(candles || []);
+	candlestickSeries.setData(candles);
 
-	// Set chart precision
-	if (candles.length) {
-		const lastCandle = candles[candles.length-1];
-		const precision = Math.max(getPrecision(lastCandle.close),getPrecision(lastCandle.open),getPrecision(lastCandle.high),getPrecision(lastCandle.low));
-		candlestickSeries.applyOptions({
-		    priceFormat: {
-		        type: 'price',
-		        precision: precision,
-		        minMove: 1/10**precision,
-		    },
-		});
-
-		// set earliest candle
-		earliestCandleDate = candles[0].time;
-	}
-
-	// chart.timeScale().fitContent();
-	chart.priceScale('right').applyOptions({autoScale: true});
-
-	// redraw order and position lines
-	loadOrderLines();
-	loadPositionLines();
-
-
-	chartLoading.set(false);
+	//chart.timeScale().fitContent();
 
 }
 
-export function onNewPrice(price) {
-
-	const market = get(selectedMarket);
-
-	if (lastMarket != market) {
-		return;
-	}
-
-	if (!candlestickSeries || !candles.length) return;
-	
+export function onNewPrice(price, timestamp, _product) {
 	// add data point to current candle set
 	// use update with time = last time for this resolution
 	// get last data point to update ohlc values based on given data point
 
+	//candlestickSeries.update({ time: '2019-01-01', open: 60.71, high: 60.71, low: 53.39, close: 59.29 });
+
+	const symbol = get(product).symbol;
+
+	if (_product != symbol) return;
+
 	let lastCandle = candles[candles.length - 1];
+
 	if (!lastCandle) return;
 
-	const timestamp = correctedTime(Date.now() / 1000); // TODO: this should be timestamp from DB
+	timestamp = correctedTime(timestamp/1000);
+
 	const resolution = get(chartResolution);
 
 	if (timestamp >= lastCandle.time + resolution) {
@@ -304,7 +268,7 @@ export function onNewPrice(price) {
 			time: parseInt(resolution * parseInt(timestamp/resolution)),
 			low: price,
 			high: price,
-			open: lastCandle.close || price, // smoothing
+			open: price,
 			close: price
 		}
 		candles.push(candle);
@@ -314,123 +278,55 @@ export function onNewPrice(price) {
 		if (lastCandle.low > price) lastCandle.low = price;
 		if (lastCandle.high < price) lastCandle.high = price;
 		lastCandle.close = price;
+
 		candles[candles.length - 1] = lastCandle;
 		candlestickSeries.update(lastCandle);
 	}
 
 }
 
-// Order and position lines
+let pricelines = [];
 
-let orderLines = [];
-let positionLines = [];
+export function loadPositionLines() {
 
-function loadOrderLines(_orders) {
-
-	if (!_orders) _orders = get(orders);
-
-	if (!candlestickSeries) {
-		setTimeout(() => {
-			loadOrderLines(_orders);
-		}, 2000);
-		return;
-	}
-
-	clearOrderLines();
-
-	if (!get(showOrdersOnChart)) return;
-
-	for (let _order of _orders) {
-
-		_order = formatOrder(_order);
-
-		if (isNaN(_order.price*1) || _order.market != get(selectedMarket)) continue;
-
-		orderLines.push(
-			candlestickSeries.createPriceLine({
-			    price: _order.price,
-			    color: 'rgb(72,72,74)',
-			    lineWidth: 1,
-			    lineStyle: LineStyle.Solid,
-			    axisLabelVisible: true,
-			    title: `${_order.isLong ? '▲' : '▼'} ${formatForDisplay(_order.size)} ${_order.asset}`,
-			})
-		);
-
-	}
-
-}
-
-function loadPositionLines(_positions) {
-
-	if (!_positions) _positions = get(positions);
+	return; // disabled for now
+	
+	//console.log('loadPositionLines');
 
 	if (!candlestickSeries) {
-		setTimeout(() => {
-			loadPositionLines(_positions);
-		}, 2000);
+		//console.log('nope2');
+		setTimeout(loadPositionLines, 2000);
 		return;
 	}
 
 	clearPositionLines();
 
+	const _positions = get(positions);
 
-	if (!get(showPositionsOnChart)) return;
+	//console.log('_positions', _positions);
 
-	let markers = [];
+	for (const _pos of _positions) {
 
-	for (let _position of _positions) {
+		//if (!_pos.price) continue;
 
-		_position = formatPosition(_position);
-
-		if (_position.market != get(selectedMarket)) continue;
-
-		positionLines.push(
+		pricelines.push(
 			candlestickSeries.createPriceLine({
-			    price: _position.price,
-			    color: _position.isLong ? '#00D604' : '#FF5000',
-			    lineWidth: 1,
-			    lineStyle: LineStyle.Solid,
+			    price: _pos.price * 1 + 4280,
+			    color: 'green',
+			    lineWidth: 2,
+			    lineStyle: LightweightCharts.LineStyle.Dotted,
 			    axisLabelVisible: true,
-			    title: `${_position.isLong ? '▲' : '▼'} ${formatForDisplay(_position.size)} ${_position.asset}`,
+			    title: _pos.amount,
 			})
 		);
 
-		// markers.push({
-		// 	time: _position.timestamp.toNumber(),
-		// 	position: _position.isLong ? 'belowBar' : 'aboveBar',
-		// 	color: _position.isLong ? '#00D604' : '#FF5000',
-		// 	shape: _position.isLong ? 'arrowUp' : 'arrowDown',
-		// 	id: 'pos',
-		// 	text: `${formatForDisplay(_position.size)} ${_position.asset}`,
-		// 	size: 2
-		// });
-
 	}
 
-	// markers.sort((a,b) => {
-	// 	if (a.timestamp > b.timestamp) return 1;
-	// 	if (a.timestamp < b.timestamp) return -1;
-	// 	return 0;
-	// });
-
-	// console.log('markers', markers);
-
-	// candlestickSeries.setMarkers(markers);
-
-}
-
-function clearOrderLines() {
-	for (const priceline of orderLines) {
-		candlestickSeries.removePriceLine(priceline);
-	}
-	orderLines = [];
 }
 
 function clearPositionLines() {
-	for (const priceline of positionLines) {
+	for (const priceline of pricelines) {
 		candlestickSeries.removePriceLine(priceline);
 	}
-	candlestickSeries.setMarkers([]);
-	positionLines = [];
+	pricelines = [];
 }
