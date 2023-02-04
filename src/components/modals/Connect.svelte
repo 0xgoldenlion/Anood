@@ -1,6 +1,7 @@
 <script>
-	import Modal from './Modal.svelte'
-	import { connectMetamask, connectWalletConnect } from '@lib/connect'
+	import Modal from '../modals/Modal.svelte'
+	import { connectMetamask, connectWalletConnect } from '../../lib/wallet'
+	
 </script>
 
 <style>
@@ -9,33 +10,47 @@
 		display: flex;
 		align-items: center;
 		padding: 0 var(--base-padding);
-		border-bottom: 1px solid var(--layer2);
-		font-weight: 500;
+		border-bottom: 1px solid var(--jet-dim);
+		font-size: 120%;
+		font-weight: 700;
 		cursor: pointer;
-		height: 54px;
+		height: 74px;
 	}
-	.row:not(.active):hover {
-		background-color: var(--layer1dot5);
+	.row:not(.selected):hover {
+		background-color: var(--jet-dim);
+	}
+	.row.selected {
+		background-color: var(--jet);
+		cursor: default !important;
 	}
 	.row:last-child {
 		border-bottom: none;
 	}
 
 	.row img {
-		max-width: 36px;
+		max-width: 42px;
 		margin-right: 20px;
+	}
+	
+	.note {
+		line-height: 1.418;
+		padding: var(--base-padding);
+		border-bottom: 1px solid var(--jet-dim);
+		font-size: 90%;
 	}
 
 </style>
 
-<Modal title='Connect Your Wallet' width={300}>
+<Modal>
 	
-	<div class='row' on:click|stopPropagation={() => {connectMetamask()}}>
+	<div class='note'><strong>Important Note:</strong><br/>this project is only for TEST purpose</div>
+
+	<div class='row' on:click={() => {connectMetamask()}} data-intercept="true">
 		<img src='https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg'>
 		<div>MetaMask</div>
 	</div>
 
-	<div class='row' on:click|stopPropagation={() => {connectWalletConnect()}}>
+	<div class='row' on:click={() => {connectWalletConnect()}} data-intercept="true">
 		<img src='https://raw.githubusercontent.com/WalletConnect/walletconnect-assets/master/Icon/Blue%20(Default)/Icon.svg'>
 		<div>WalletConnect</div>
 	</div>
