@@ -1,33 +1,15 @@
-import path from 'path';
 import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
-import alias from '@rollup/plugin-alias';
 import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
 import copy from 'rollup-plugin-copy';
-import replace from '@rollup/plugin-replace';
 import gzipPlugin from 'rollup-plugin-gzip';
 import { brotliCompressSync } from 'zlib';
 
 const production = !process.env.ROLLUP_WATCH;
 const hash = String(require('child_process').execSync('git rev-parse --short HEAD')).trim(); // append short git commit to bundles
-
-const customResolver = resolve({
-  extensions: ['.js', '.svelte']
-});
-
-const projectRootDir = path.resolve(__dirname);
-
-const aliases = alias({
-	entries: [
-		{ find: /@api\/([a-z\/]+)/, replacement: path.resolve(projectRootDir, 'src/api/$1.js') },
-		{ find: /@lib\/([a-z\/]+)/, replacement: path.resolve(projectRootDir, 'src/lib/$1.js') },
-		{ find: '@components', replacement: path.resolve(projectRootDir, 'src/components') }
-	],
-	customResolver
-});
 
 function serve() {
 	let server;
@@ -56,13 +38,9 @@ export default {
 		sourcemap: !production,
 		format: 'iife',
 		name: 'app',
-		file: 'build/bundle.' + hash + '.js',
-		inlineDynamicImports: true
+		file: 'build/bundle.' + hash + '.js'
 	},
 	plugins: [
-
-		aliases,
-
 		svelte({
 			compilerOptions: {
 				// enable run-time checks when not in production
@@ -107,10 +85,6 @@ export default {
             ],
         }),
 
-		replace({
-	      'process.env.NODE_ENV': JSON.stringify('production'),
-	    }),
-		
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
 		!production && serve(),
