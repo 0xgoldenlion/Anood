@@ -3,11 +3,11 @@ export const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 export const HISTORY_COUNT = 10;
 
 export const CURRENCY_LOGOS = {
-	tfil: '/logos/FIL.svg',
+	FTM: '/logos/FTM.svg',
 	usdc: '/logos/USDC.svg',
-	weth: '/logos/FIL.svg',
+	weth: '/logos/FTM.svg',
 	cap: '/logos/CAP.svg',
-	FTM: '/logos/FTM.svg'
+	tfil: '/logos/FIL.svg',
 }
 
 export const ABIS = {
