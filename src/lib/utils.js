@@ -42,8 +42,8 @@ export function addrLink(addr) {
 	return `${explorer}/address/${addr}`; 
 }
 export function formatCurrency(_currencyLabel) {
-	if (!_currencyLabel) return 'tFIL';
-	if (_currencyLabel.toLowerCase() == 'weth') return 'tFIL';
+	if (!_currencyLabel) return 'FTM';
+	if (_currencyLabel.toLowerCase() == 'weth') return 'FTM';
 	if (_currencyLabel.toLowerCase() == 'usdc') return 'USDC';
 	if (_currencyLabel.toLowerCase() == 'cap') return 'AND';
 	return _currencyLabel;

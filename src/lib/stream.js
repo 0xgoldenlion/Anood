@@ -11,7 +11,7 @@ import { setTitle, shortSymbol, showToast, hideToast } from './utils'
 let ws;
 let h;
 let subscribedProducts = {
-	'FIL-USD': true
+	'FTM-USD': true
 };
 
 function heartbeat() {

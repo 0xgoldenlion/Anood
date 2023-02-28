@@ -8,7 +8,7 @@ export const DEFAULT_ORDERS_SORT_KEY = ['orderId', true];
 export const DEFAULT_POSITIONS_SORT_KEY = ['timestamp', true];
 export const DEFAULT_HISTORY_SORT_KEY = ['timestamp', true];
 export const DEFAULT_HISTORY_COUNT = 50;
-export const DEFAULT_CHAIN_ID = 3141;
+export const DEFAULT_CHAIN_ID = 4002;
 export const CHAINDATA = {
 /*	31337: {
 		label: 'localhost',
@@ -36,7 +36,7 @@ export const CHAINDATA = {
 		nativeAssetDecimals: 18,
 	},*/
 	3141: {
-		label: 'hyperspace',
+		label: 'Fantom',
 		explorer: 'https://hyperspace.filfox.info/en',
 		rpc: 'https://filecoin-hyperspace.chainstacklabs.com/rpc/v1', // for walletconnect
 		currencyName: 'USDC',
@@ -57,7 +57,7 @@ export const CHAINDATA = {
 			'BTC-USD': "",
 			'ETH-USD': "",
 		},
-		subgraphUrl: "https://api.thegraph.com/subgraphs/name/kappacappa/capv4",
+		subgraphUrl: "",
 		chainName: 'Filecoin hyperspace',
 		chainNameShort: 'hyperspace', //for mobile screens
 		chainId: '0xc45', //chainId number in hexadecimal prefixed by 0x

@@ -6,7 +6,8 @@ export const CURRENCY_LOGOS = {
 	tfil: '/logos/FIL.svg',
 	usdc: '/logos/USDC.svg',
 	weth: '/logos/FIL.svg',
-	cap: '/logos/CAP.svg'
+	cap: '/logos/CAP.svg',
+	FTM: '/logos/FTM.svg'
 }
 
 export const ABIS = {
@@ -123,5 +124,27 @@ export const CHAINDATA = {
 			cap: 1637154307000
 		},
 		cap: '0x7f54F77803A52f75eCa36c0b8718ED86bb2cb262'
+	},
+	4002: {
+		label: 'Fantom',
+		router: '0xAe467A4CfCe5310C50E2b2A1ad30768A02155fAC',
+		explorer: 'https://testnet.ftmscan.com/',
+		rpc: 'https://rpc.ankr.com/fantom_testnet', // for walletconnect
+		currencies: {
+			weth: ADDRESS_ZERO,
+			usdc: '0x3bBF3EaacC44b3ed11c1713D439aFC5f105871a5'
+		},
+		chainName: 'Fantom Testnet',
+		chainNameShort: 'Fantom', //for mobile screens
+		chainId: '0xFA2', //chainId number in hexadecimal prefixed by 0x
+		nativeAssetName: 'FTM',
+		nativeAssetSymbol: 'FTM',
+		nativeAssetDecimals: 18,
+		poolInception: {
+			weth: 1637154307000,
+			usdc: 1637154307000,
+			cap: 1637154307000
+		},
+		cap: '0x16de95d9199Fceb3546565909eB52a4726B14311'
 	},
 }

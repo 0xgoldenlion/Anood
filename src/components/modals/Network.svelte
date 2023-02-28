@@ -6,14 +6,14 @@
 </script>
 
 <Modal title="Invalid Network" showHeader={true} showCancel={true}>
-  <div class="note">Select Hyperspace as your wallet's network to trade or pool on Anood.</div>
+  <div class="note">Select Fantom testnet as your wallet's network to trade or pool on Anood.</div>
 
   <Button
     wrap={true}
     onClick={() => {
       switchChains();
     }}
-    label={`Switch to Hyperspace`}
+    label={`Switch to Fantom testnet`}
   />
 </Modal>
 

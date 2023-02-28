@@ -200,8 +200,8 @@
     </div>
   {:else if $address && balance * 1 == 0}
     <div class="note">
-      <a href="#/buy" target="_blank">Mint USDC</a> OR
-      <a href="https://hyperspace.yoga/#faucet" target="_blank">Use fil Faucet</a> to start trading.
+      <a href="#/mint" target="_blank">Mint USDC</a> OR
+      <a href="https://faucet.fantom.network/" target="_blank">Use FTM Faucet</a> to start trading.
     </div>
   {/if}
 </div>

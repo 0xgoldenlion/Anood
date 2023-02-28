@@ -6,9 +6,9 @@ import { CHAINDATA } from './constants'
 import { showToast, hideModal } from './utils'
 import { chainId, signer, provider, address } from './stores'
 
-let _provider = new ethers.providers.JsonRpcProvider('https://filecoin-hyperspace.chainstacklabs.com/rpc/v1');
+let _provider = new ethers.providers.JsonRpcProvider('https://rpc.testnet.fantom.network');
 provider.set(_provider);
-chainId.set(3141);
+chainId.set(4002);
 let _walletConnect;
 
 export async function checkMetamaskSession() {
@@ -61,7 +61,7 @@ export async function connectWalletConnect() {
 
 		_walletConnect = new WalletConnectProvider.default({
 			rpc: {
-				3141: CHAINDATA[3141].rpc
+				4002: CHAINDATA[4002].rpc
 			}
 		});
 
@@ -114,7 +114,7 @@ export async function switchChains() {
 	try {
 		await wallet.request({
 			method: 'wallet_switchEthereumChain',
-			params: [{ chainId: '0xc45' }],
+			params: [{ chainId: '0xFA2' }],
 		});
 	} catch (switchError) {
 		// This error code indicates that the chain has not been added to MetaMask.
@@ -123,15 +123,15 @@ export async function switchChains() {
 				await wallet.request({
 					method: 'wallet_addEthereumChain',
 					params: [{
-						chainId: '0xc45',
-						chainName: 'Filecoin hyperspace',
-						rpcUrls: [CHAINDATA[3141]['rpc']],
+						chainId: '0xFA2',
+						chainName: 'Fantopm testnet',
+						rpcUrls: [CHAINDATA[4002]['rpc']],
 						nativeCurrency: {
-							name: 'tFil',
-							symbol: 'tfil',
+							name: 'FTM',
+							symbol: 'FTM',
 							decimals: 18
 						},
-						blockExplorerUrls: [CHAINDATA[3141]['explorer']]
+						blockExplorerUrls: [CHAINDATA[4002]['explorer']]
 					}],
 				});
 			} catch (addError) {

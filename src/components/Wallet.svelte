@@ -24,7 +24,7 @@
         switchChains();
       }}
     >
-      Switch to Hyperspace
+      Switch to Fantom testnet
     </div>
   {/if}
 

@@ -63,7 +63,7 @@ export async function connectWalletConnect() {
 		_walletConnect = new WalletConnectProvider.default({
 			rpc: {
 				//31337: CHAINDATA[31337].rpc,
-				3141: CHAINDATA[3141].rpc
+				4002: CHAINDATA[4002].rpc
 			}
 		});
 
