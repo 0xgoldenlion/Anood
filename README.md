@@ -1,38 +1,45 @@
-# create-svelte
+![N|Solid](https://storage.googleapis.com/ethglobal-api-production/projects%2Fziqyq%2Fimages%2Funknown.png)
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+<h1 align="center"> Anoodfi </h1>
+<h4 align="center"> a crypto-synthetic trading protocol  </h4>
 
-## Creating a project
+https://fvm.anoodfi.xyz/
 
-If you're seeing this, you've probably already done this step. Congrats!
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+## Introduction
+Anoodfi is a crypto-synthetic trading protocol that uses a price feed and a liquidity pool to make markets. An automated market maker modeled by Gaussian functions quotes prices to traders. Users can trade with leverage using a fair system that shares margin across positions to minimize liquidation risk. Anyone can participate in the liquidity pool by buying AND tokens, which track each user’s share in the pool. Some components of the protocol that rely on speed and low cost are managed off-chain.
+ 
 
-## Developing
+## How To Use
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+To clone and run this project , you'll need [Git](https://git-scm.com) and [Node.js](https://nodejs.org/en/download/) (which comes with [npm](http://npmjs.com)) installed on your computer. From your command line:
 
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Clone this repository
+$ git clone https://github.com/0xgoldenlion/Anood/tree/FVM
+# Install dependencies
+$ yarn install
+# run locally
+$ yarn dev
 ```
 
-## Building
-
-To create a production version of your app:
+for the smart contracts 
 
 ```bash
-npm run build
+# fo to directory 
+$ cd smart-contract
+# Install dependencies
+$ yarn install
+# compile
+$ npx hardhat compile 
 ```
 
-You can preview the production build with `npm run preview`.
+## Future work:
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+go mainnet
+
+
+## License
+
+MIT
